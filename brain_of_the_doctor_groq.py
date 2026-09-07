@@ -1,5 +1,6 @@
 import base64
 import os
+import re
 from io import BytesIO
 
 from dotenv import load_dotenv
@@ -44,7 +45,8 @@ def brain_of_the_doctor(patient_text, image_filepath=None, video_filepath=None):
 
     client = Groq(api_key=groq_api_key)
     response = client.chat.completions.create(
-        model=os.environ.get("GROQ_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct"),
+        model=os.environ.get("GROQ_MODEL", "qwen/qwen3.6-27b"),
+        reasoning_effort="none",
         max_completion_tokens=1000,
         messages=[
             {
@@ -66,7 +68,10 @@ def brain_of_the_doctor(patient_text, image_filepath=None, video_filepath=None):
         ],
     )
 
-    return response.choices[0].message.content
+    content = response.choices[0].message.content or ""
+    # Strip thinking tags from reasoning models if present
+    content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+    return content
 
 
 # OLD CODE KEPT FOR REFERENCE
